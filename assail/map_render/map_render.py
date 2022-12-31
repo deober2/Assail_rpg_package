@@ -1,7 +1,6 @@
 from numpy import random
 from PIL import Image
 from assail.resources.image_loading import *
-import io
 
 
 def generate_battle(
@@ -94,7 +93,7 @@ def battle_map_to_image(battle_map: list[list[int]]) -> Image:
 
     Returns
     -------
-        buffer : Image buffer data. Call buffer.getvalue() to get the image data.
+        large_image : PIL Image
     """
     # Access all elemental tile images
     small_images = [
@@ -122,9 +121,54 @@ def battle_map_to_image(battle_map: list[list[int]]) -> Image:
                 small_image, (j * small_image_width, i * small_image_height)
             )
 
-    # Save the large image to a memory buffer
-    # buffer = io.BytesIO()
-    # large_image.save(buffer, format="PNG")
-
     # Return the image
     return large_image
+
+
+def render_characters_on_map(battle_map: Image, creature_image_list: list) -> Image:
+    """Takes a battle map image and a list of creature images, with image coordinates.
+    Renders thecreatures on the map.
+
+    Parameters
+    ----------
+    battleMap : Image
+        PIL Image of the battle map.
+    creatureList : list
+        List of lists. Each list contains the image data of a creature, and its x and y coordinates.
+
+
+    Returns
+    -------
+    new_image : Image
+        PIL Image of the battle map with creatures rendered on top.
+    """
+    small_images = [
+        WATER_TEXTURE,
+        TREE_TEXTURE,
+        GRASS_TEXTURE,
+        ROCK_TEXTURE,
+        DIRT_TEXTURE,
+    ]
+
+    # Store the dimensions of the small images
+    small_image_width = small_images[0].size[0]
+    small_image_height = small_images[0].size[1]
+
+    # iterate through the small images and render them on the large image
+    for small_image, (x, y) in creature_image_list:
+        # calculate the top-left and bottom-right coordinates of the grid space
+        x1 = x * small_image_width
+        y1 = y * small_image_height
+
+        # calculate the center point of the grid space
+        center_x = x1 + (small_image_width // 2)
+        center_y = y1 + (small_image_height // 2)
+
+        # calculate the top-left corner of the small image based on its size and the center point
+        small_x = center_x - (small_image.width // 2)
+        small_y = center_y - (small_image.height // 2)
+
+        # paste the small image onto the large image
+        battle_map.paste(small_image, (small_x, small_y))
+
+    return battle_map
